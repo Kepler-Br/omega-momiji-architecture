@@ -1,0 +1,70 @@
+openapi: 3.0.3
+info:
+  title: Omega Momiji frontend API
+  description: |-
+    TODO: Fill me
+  version: 1.0.0
+externalDocs:
+  description: Find out more about Swagger
+  url: https://swagger.io
+servers:
+  - url: http://localhost:8088
+tags:
+  - name: SendMessage
+    description: Sending messages
+paths:
+  /text-messages:
+    post:
+      tags:
+        - SendMessage
+      summary: Send a message
+      description: Send a message to a corresponging messenger the frontend is implemented for
+      operationId: sendMessage
+      requestBody:
+        description: Message data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMessageRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendMessageResponse'
+        '400':
+          description: Invalid ID supplied
+        '500':
+          description: Something bad happened on server side
+
+components:
+  schemas:
+    SendMessageRequest:
+      required:
+        - text
+        - chat_id
+      type: object
+      properties:
+        text:
+          type: string
+          example: Hello world!
+        reply_to:
+          type: string
+          example: '10'
+          description: A messenger native message ID
+        chat_id:
+          type: string
+          example: '12345678'
+          description: A messenger native chat ID
+    SendMessageResponse:
+      type: object
+      properties:
+        error_message:
+          type: string
+          example: Hello world!
+        message_id:
+          type: string
+          example: '10'
+          description: A messenger native message ID that was sent

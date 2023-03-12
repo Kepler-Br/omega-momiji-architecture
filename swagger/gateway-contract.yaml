@@ -1,0 +1,216 @@
+openapi: 3.0.3
+info:
+  title: Omega Momiji messenger gateway
+  description: |-
+    A gateway that connects backend logic with various frontends.
+  version: 1.0.0
+externalDocs:
+  description: Find out more about Swagger
+  url: http://swagger.io
+servers:
+  - url: http://localhost:8089
+tags:
+  - name: Inbound
+    description: Everything about receiving a message
+  - name: Outbound
+    description: Everything about sending messages
+paths:
+  /inbound/messages:
+    put:
+      tags:
+        - Inbound
+      summary: Receive a message
+      description: Receive a message from frontend. This endpoint should be used by frontends
+      operationId: receiveMessage
+      requestBody:
+        description: Message content
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InboundMessagesRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Client did wrong
+        '500':
+          description: Server did wrong. You're on your own now
+  /outbound/text-messages:
+    post:
+      tags:
+        - Outbound
+      summary: Send a text message
+      description: Send a text messate to a frontend. This endpoint should be used by bot logic
+      operationId: sendTextMessage
+      requestBody:
+        description: Message to send
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendTextMessageRequest'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendTextMessageResponse'
+        '400':
+          description: Client did wrong
+        '500':
+          description: Server did wrong. You're on your own now
+  /outbound/frontends:
+    get:
+      tags:
+        - Outbound
+      summary: Get frontend names on this gateway
+      description: Get registered frontend names on this gateway. Mostly for debug purposes
+      operationId: frontendNames
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FrontendNamesResponse'
+
+components:
+  schemas:
+    FrontendNamesResponse:
+      type: object
+      required:
+        - names
+      properties:
+        names:
+          type: array
+          description: A list of frontend names. You can send messages to this frontends
+          example:
+            - telegram
+            - discord
+          items:
+            type: string
+    SendTextMessageRequest:
+      type: object
+      required:
+        - frontend
+        - text
+        - chat_id
+      properties:
+        frontend:
+          type: string
+          description: Frontend name to which the message should be sent
+          example: telegram
+        text:
+          type: string
+          description: Message body
+          example: Hello world!
+        chat_id:
+          type: string
+          description: Native for frontend chat ID
+          example: '123567'
+        reply_to_message_id:
+          type: string
+          description: Native for frontend message ID to reply to
+          example: '1'
+    SendTextMessageResponse:
+      type: object
+      properties:
+        error_message:
+          type: string
+          description: If you're licky, there will be a error message
+          example: Something bad happened!
+        message_id:
+          type: string
+          description: Native message ID
+          example: '10'
+    InboundMessagesRequest:
+      type: object
+      required:
+        - id
+        - author
+        - chat
+        - frontend
+        - type
+      properties:
+        id:
+          type: string
+          description: A native message ID
+          example: '10'
+        author:
+          $ref: '#/components/schemas/Author'
+        chat:
+          $ref: '#/components/schemas/Chat'
+        frontend:
+          type: string
+          description: Frontend name. Frontend should write here its name
+          example: telegram
+        text:
+          type: string
+          description: Message text
+          example: Hello world!
+        type:
+          type: string
+          example: MESSAGE
+          enum:
+            - MESSAGE
+            - ACTION
+        action_info:
+          $ref: '#/components/schemas/ActionInfo'
+    Author:
+      type: object
+      required:
+        - id
+        - username
+        - fullname
+      properties:
+        id:
+          type: string
+          example: '123'
+          description: Native user ID
+        username:
+          type: string
+          example: Simpleton
+          description: Username
+        fullname:
+          type: string
+          example: Fullname
+          description: User\'s fullname that consists of firstname and lastname
+    Chat:
+      type: object
+      required:
+        - id
+        - title
+        - type
+      properties:
+        id:
+          type: string
+          description: Frontend native chat ID
+          example: '12356'
+        title:
+          type: string
+          description: Chat title
+          example: Omega Momiji Dev Chat
+        type:
+          type: string
+          description: Chat type
+          example: GROUP
+          enum:
+            - GROUP
+            - PRIVATE
+    ActionInfo:
+      type: object
+      required:
+        - action_type
+        - related_user
+      properties:
+        action_type:
+          type: string
+          example: NEW_MEMBER
+          description: Action type. NEW_MEMBER - new member; MEMBER_LEFT - member left; OTHER - actions that is in no interest for gateway
+          enum:
+            - NEW_MEMBER
+            - MEMBER_LEFT
+            - OTHER
+        related_user:
+          $ref: '#/components/schemas/Author'
