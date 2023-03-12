@@ -1,0 +1,184 @@
+openapi: 3.0.3
+info:
+  title: Omega Momiji text generation neural network backend
+  description: |-
+    TODO: fill me
+  version: 1.0.0
+externalDocs:
+  description: Find out more about Swagger
+  url: http://swagger.io
+servers:
+  - url: https://localhost:8087
+tags:
+  - name: Generation
+    description: Everything about receiving a message
+paths:
+  /history-prompts:
+    post:
+      tags:
+        - Generation
+      summary: Generate with message history
+      description: Generate text with some message history
+      operationId: historyInputGeneration
+      requestBody:
+        description: Request content
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HistoryGenerationRequest'
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Client did wrong
+        '500':
+          description: Server did wrong. You're on your own now
+  /raw-prompts:
+    put:
+      tags:
+        - Generation
+      summary: Generate with raw input
+      description: Generate text using raw input without preprocessing
+      operationId: rawInputGeneration
+      requestBody:
+        description: Request content
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RawGenerationRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RawGenerationResponse'
+        '400':
+          description: Client did wrong
+        '500':
+          description: Server did wrong. You're on your own now
+
+components:
+  schemas:
+    HistoryGenerationRequest:
+      type: object
+      required:
+        - names
+      properties:
+        prompt:
+          type: string
+          description: A prompt that should be passed to neural network
+          example: According to all known laws of aviation, there is no way a bee should be able to fly. Its wings are too small to get its fat little body off the ground. The bee, of course, flies anyway because bees don't care what humans think is impossible.
+        temperature:
+          type: number
+          format: float
+          description: TODO
+          example: 0.8
+        max_new_tokens:
+          type: number
+          format: int32
+          description: Max new tokens that may be generated
+          example: 50
+        num_beams:
+          type: number
+          format: int32
+          description: TODO
+          example: 5
+        repetition_penalty:
+          type: number
+          format: float
+          description: TODO
+          example: 5.0
+        early_stopping:
+          type: boolean
+          description: Stop before max tokens reached
+          example: true
+        seed:
+          type: number
+          format: int64
+          description: Seed to generate with. Same seeds will produce same results
+          example: 1337
+        top_k:
+          type: number
+          format: int32
+          description: TODO
+          example: 50
+        top_p:
+          type: number
+          format: float
+          description: TODO
+          example: 0.95
+        bad_words:
+          type: array
+          description: Tokens that are forbidden to be generated
+          items:
+            type: string
+          example:
+            - ' [STICKER]'
+            - ' [VOICE]'
+    RawGenerationResponse:
+      type: object
+      required:
+        - text
+      properties:
+        text:
+          type: string
+          description: Generated text without prompt
+          example: Yellow, black. Yellow, black. Yellow, black. Yellow, black. Ooh, black and yellow!
+    RawGenerationRequest:
+      type: object
+      required:
+        - names
+      properties:
+        prompt:
+          type: string
+          description: A prompt that should be passed to neural network
+          example: According to all known laws of aviation, there is no way a bee should be able to fly. Its wings are too small to get its fat little body off the ground. The bee, of course, flies anyway because bees don't care what humans think is impossible.
+        temperature:
+          type: number
+          format: float
+          description: TODO
+          example: 0.8
+        max_new_tokens:
+          type: number
+          format: int32
+          description: Max new tokens that may be generated
+          example: 50
+        num_beams:
+          type: number
+          format: int32
+          description: TODO
+          example: 5
+        repetition_penalty:
+          type: number
+          format: float
+          description: TODO
+          example: 5.0
+        early_stopping:
+          type: boolean
+          description: Stop before max tokens reached
+          example: true
+        seed:
+          type: number
+          format: int64
+          description: Seed to generate with. Same seeds will produce same results
+          example: 1337
+        top_k:
+          type: number
+          format: int32
+          description: TODO
+          example: 50
+        top_p:
+          type: number
+          format: float
+          description: TODO
+          example: 0.95
+        bad_words:
+          type: array
+          description: Tokens that are forbidden to be generated
+          items:
+            type: string
+          example:
+            - ' [STICKER]'
+            - ' [VOICE]'
