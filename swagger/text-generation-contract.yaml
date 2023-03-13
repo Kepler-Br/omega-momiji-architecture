@@ -13,13 +13,29 @@ tags:
   - name: Generation
     description: Everything about receiving a message
 paths:
-  /history-prompts:
-    post:
+  /history-prompts/{promptId}:
+    put:
       tags:
         - Generation
       summary: Generate with message history
       description: Generate text with some message history
       operationId: historyInputGeneration
+      parameters:
+        - name: promptId
+          in: path
+          description: Prompt id. Used for task scheduling.
+          required: true
+          schema:
+            type: string
+            format: uuid
+            example: 470cbbaf-3211-4f8e-8f5f-69c2c07856e8
+        - name: Run-Asynchronously
+          in: header
+          description: If set to true, a 202 ACCEPTED will be returned. Subsequent requests will return 425 TOO_EARLY until the task will be completed. If not, the connection will be not closed until the task is done. Results should be stored in local cache.
+          schema:
+            type: string
+            format: boolean
+            example: true
       requestBody:
         description: Request content
         content:
@@ -29,17 +45,41 @@ paths:
       responses:
         '200':
           description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoryGenerationResponse'
         '400':
           description: Client did wrong
+        '202':
+          description: Task was accepted for work
+        '425':
+          description: A task is still in work. Ask later
         '500':
           description: Server did wrong. You're on your own now
-  /raw-prompts:
+  /raw-prompts/{promptId}:
     put:
       tags:
         - Generation
       summary: Generate with raw input
       description: Generate text using raw input without preprocessing
       operationId: rawInputGeneration
+      parameters:
+        - name: promptId
+          in: path
+          description: Prompt id. Used for task scheduling.
+          required: true
+          schema:
+            type: string
+            format: uuid
+            example: 470cbbaf-3211-4f8e-8f5f-69c2c07856e8
+        - name: Run-Asynchronously
+          in: header
+          description: If set to true, a 202 ACCEPTED will be returned. Subsequent requests will return 425 TOO_EARLY until the task will be completed. If not, the connection will be not closed until the task is done. Results should be stored in local cache.
+          schema:
+            type: string
+            format: boolean
+            example: true
       requestBody:
         description: Request content
         content:
@@ -56,20 +96,66 @@ paths:
                 $ref: '#/components/schemas/RawGenerationResponse'
         '400':
           description: Client did wrong
+        '202':
+          description: Task was accepted for work
+        '425':
+          description: A task is still in work. Ask later
         '500':
           description: Server did wrong. You're on your own now
 
 components:
   schemas:
+    MessageType:
+      type: string
+      example: TEXT
+      description: Message type
+      enum:
+        - VOICE
+        - IMAGE
+        - STICKER
+        - TEXT
+    Message:
+      type: object
+      required:
+        - message_type
+        - content
+        - author
+        - message_id
+      properties:
+        message_type:
+          $ref: '#/components/schemas/MessageType'
+        content:
+          type: string
+          description: A string that contains message body. If text - message text; if Voice - voice transcription; Image/Sticker - image caption
+          example: Hello world!
+        author:
+          type: string
+          description: Message author name
+          example: Somedude
+        message_id:
+          type: string
+          description: Message ID
+          example: '2'
+        reply_to_message:
+          type: string
+          description: Message ID of replied message
+          example: '1'
+        emoji:
+          type: string
+          description: Emoji associated with message. Should be used for STICKER type
+          example: 🤔
     HistoryGenerationRequest:
       type: object
       required:
-        - names
+        - prompt
+        - message_type
       properties:
         prompt:
           type: string
           description: A prompt that should be passed to neural network
           example: According to all known laws of aviation, there is no way a bee should be able to fly. Its wings are too small to get its fat little body off the ground. The bee, of course, flies anyway because bees don't care what humans think is impossible.
+        message_type:
+          $ref: '#/components/schemas/MessageType'
         temperature:
           type: number
           format: float
@@ -117,6 +203,51 @@ components:
           example:
             - ' [STICKER]'
             - ' [VOICE]'
+        history:
+          type: array
+          description: A list of messages in history
+          items:
+            $ref: '#/components/schemas/HistoryGenerationRequest'
+          example:
+            - author: Steven
+              message_type: TEXT
+              content: Hello world!
+              message_id: '1'
+            - author: John
+              message_type: VOICE
+              content: Hello you too!
+              message_id: '2'
+              reply_to_message: '1'
+            - author: Stevgen
+              message_type: STICKER
+              content: A thinking person
+              message_id: '3'
+              emoji: 🤔
+    HistoryGenerationResponse:
+      type: object
+      required:
+        - result
+      properties:
+        result:
+          type: array
+          description: Generated(Only new messages!) messages
+          items:
+            $ref: '#/components/schemas/Message'
+          example:
+            - author: Steven
+              message_type: TEXT
+              content: Hello world!
+              message_id: '1'
+            - author: John
+              message_type: VOICE
+              content: Hello you too!
+              message_id: '2'
+              reply_to_message: '1'
+            - author: Stevgen
+              message_type: STICKER
+              content: A thinking person
+              message_id: '3'
+              emoji: 🤔
     RawGenerationResponse:
       type: object
       required:
@@ -129,7 +260,7 @@ components:
     RawGenerationRequest:
       type: object
       required:
-        - names
+        - prompt
       properties:
         prompt:
           type: string

@@ -20,7 +20,10 @@ paths:
       tags:
         - Inbound
       summary: Receive a message
-      description: Receive a message from frontend. This endpoint should be used by frontends
+      description: >-
+        Receive a message from frontend.
+        This endpoint should be used by frontends.
+        This is a PUT method because messages with same id, chat id and frontend can be updated
       operationId: receiveMessage
       requestBody:
         description: Message content
