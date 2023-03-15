@@ -147,7 +147,6 @@ components:
     HistoryGenerationRequest:
       type: object
       required:
-        - prompt
         - message_type
       properties:
         prompt:
