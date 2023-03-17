@@ -3,11 +3,12 @@
 --changeset 45532267+kepler-br@users.noreply.github.com:init_tables
 create table users
 (
-    id        serial primary key,
-    username  varchar(1024) not null,
-    fullname  varchar(1024) not null,
-    frontend  varchar(100)  not null,
-    native_id varchar(100)  not null
+    id         serial primary key,
+    username   varchar(1024) not null,
+    fullname   varchar(1024) not null,
+    frontend   varchar(100)  not null,
+    native_id  varchar(100)  not null,
+    created_at timestamp     not null
 )
 ;
 
@@ -15,12 +16,13 @@ create unique index uix_users_native_id_frontend on users (native_id, frontend);
 
 create table chats
 (
-    id        serial primary key,
-    title     varchar(1024) not null,
-    frontend  varchar(100)  not null,
-    native_id varchar(100)  not null,
-    "type"    varchar(100)  not null
-        constraint chk_chats_type check ("type" in ('PRIVATE', 'GROUP'))
+    id         serial primary key,
+    title      varchar(1024) not null,
+    frontend   varchar(100)  not null,
+    native_id  varchar(100)  not null,
+    "type"     varchar(100)  not null
+        constraint chk_chats_type check ("type" in ('PRIVATE', 'GROUP')),
+    created_at timestamp     not null
 )
 ;
 
@@ -40,7 +42,8 @@ create table messages
     user_id    serial references users (id) not null
         constraint fk_messages_users_id references users (id),
     frontend   varchar(100)                 not null,
-    native_id  varchar(100)                 not null
+    native_id  varchar(100)                 not null,
+    created_at timestamp                    not null
 )
 ;
 

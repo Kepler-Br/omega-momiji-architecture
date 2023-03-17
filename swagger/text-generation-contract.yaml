@@ -29,13 +29,6 @@ paths:
             type: string
             format: uuid
             example: 470cbbaf-3211-4f8e-8f5f-69c2c07856e8
-        - name: Run-Asynchronously
-          in: header
-          description: If set to true, a 202 ACCEPTED will be returned. Subsequent requests will return 425 TOO_EARLY until the task will be completed. If not, the connection will be not closed until the task is done. Results should be stored in local cache.
-          schema:
-            type: string
-            format: boolean
-            example: true
       requestBody:
         description: Request content
         content:
@@ -73,13 +66,6 @@ paths:
             type: string
             format: uuid
             example: 470cbbaf-3211-4f8e-8f5f-69c2c07856e8
-        - name: Run-Asynchronously
-          in: header
-          description: If set to true, a 202 ACCEPTED will be returned. Subsequent requests will return 425 TOO_EARLY until the task will be completed. If not, the connection will be not closed until the task is done. Results should be stored in local cache.
-          schema:
-            type: string
-            format: boolean
-            example: true
       requestBody:
         description: Request content
         content:
