@@ -30,23 +30,24 @@ create unique index uix_chats_native_id_frontend on chats (native_id, frontend);
 
 create table messages
 (
-    id         serial primary key,
-    "text"     varchar null,
-    media_link varchar null,
-    media_type varchar null
+    id                         serial primary key,
+    "text"                     varchar                      null,
+    media_link                 varchar                      null,
+    media_type                 varchar                      null
         constraint chk_messages_media_type check (media_type in
-        ('STICKER', 'AUDIO', 'VOICE', 'PHOTO', 'VIDEO', 'GIF', 'VIDEO_NOTE')),
-    chat_id    serial                       not null
+                                                  ('STICKER', 'AUDIO', 'VOICE', 'PHOTO', 'VIDEO',
+                                                   'GIF', 'VIDEO_NOTE')),
+    chat_id                    serial                       not null
         constraint fk_messages_chats_id references chats (id),
-    user_id    serial references users (id) not null
+    user_id                    serial references users (id) not null
         constraint fk_messages_users_id references users (id),
-    frontend   varchar(100)                 not null,
-    native_id  varchar(100)                 not null,
-    created_at timestamp                    not null
+    frontend                   varchar(100)                 not null,
+    native_id                  varchar(100)                 not null,
+    reply_to_message_native_id varchar(100),
+    created_at                 timestamp                    not null
 )
 ;
 
 create unique index uix_messages_native_id_frontend on messages (native_id, frontend);
 
-comment
-on column messages.media_link is 'A link to file in S3';
+comment on column messages.media_link is 'A link to file in S3';
