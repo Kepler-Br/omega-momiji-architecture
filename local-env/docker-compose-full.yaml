@@ -4,7 +4,38 @@ services:
   gateway:
     build:
       context: ./gateway
+    command: java -jar app.jar --spring.profiles.active=prod
+    volumes:
+      - ./config/gateway:/content/config
+    expose:
+      - 8080
+    depends_on:
+      liquibase:
+        condition: service_completed_successfully
 
+  robot:
+    build:
+      context: ./ro-bot
+    command: java -jar app.jar --spring.profiles.active=prod
+    volumes:
+      - ./config/ro-bot:/content/config
+    expose:
+      - 8080
+    depends_on:
+      liquibase:
+        condition: service_completed_successfully
+
+  neural-text:
+    build:
+      context: ./neural-text
+    command: uvicorn app:app
+    expose:
+      - 8080
+    environment:
+      SERVER_PORT: 8080
+      SERVER_MODEL_NAME_OR_PATH: Nothing
+      SERVER_USE_STUB: true
+      PYTHONUNBUFFERED: 1
 
   postgres:
     build:

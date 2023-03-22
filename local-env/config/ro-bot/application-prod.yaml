@@ -1,0 +1,27 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    username: nonroot
+    password: nonroot
+    url: jdbc:postgresql://postgres:5432/omega
+
+momiji:
+  clients:
+    gateway:
+      stub: false
+      url: http://gateway:8080
+    neural:
+      text:
+        stub: false
+        url: http://neural-text:8090
+
+logging:
+  level:
+    com.momiji.api: trace
+    com.momiji.bot.service: trace
+    com.momiji.bot.controller: trace
+
+ro-bot:
+  context-size: 20

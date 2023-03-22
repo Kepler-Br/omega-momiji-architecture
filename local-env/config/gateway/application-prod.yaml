@@ -1,0 +1,26 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    username: nonroot
+    password: nonroot
+    url: jdbc:postgresql://postgres:5432/omega
+
+momiji:
+  clients:
+    bots:
+      stub: false
+      urls:
+        - http://robot:8080
+    frontends:
+      enabled: true
+      stub: true
+      urls:
+        telegram: http://localhost:8094
+
+logging:
+  level:
+    com.momiji.api: trace
+    com.momiji.gateway.service: trace
+    com.momiji.gateway.controller: trace
