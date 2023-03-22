@@ -1,6 +1,11 @@
 version: '3'
 
 services:
+  gateway:
+    build:
+      context: ./gateway
+
+
   postgres:
     build:
       context: ./postgres-db

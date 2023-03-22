@@ -2,7 +2,10 @@
 databaseChangeLog:
   - include:
       relativeToChangelogFile: true
-      file: 0.0.0/gateway/changelog.yaml
+      file: chats.sql
   - include:
       relativeToChangelogFile: true
-      file: 0.0.0/bot/changelog.yaml
+      file: users.sql
+  - include:
+      relativeToChangelogFile: true
+      file: messages.sql
