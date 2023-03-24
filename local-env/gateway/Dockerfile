@@ -2,8 +2,9 @@ FROM openjdk:17-alpine AS builder
 
 RUN apk add git
 
-RUN git clone https://github.com/Kepler-Br/omega-momiji-messenger-gateway.git gateway && \
-    git clone https://github.com/Kepler-Br/omega-momiji-api.git api
+RUN git clone https://github.com/Kepler-Br/omega-momiji-messenger-gateway.git /gateway && \
+    git clone https://github.com/Kepler-Br/omega-momiji-api.git /api && \
+    cd /api && git checkout
 
 WORKDIR /api
 

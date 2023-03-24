@@ -23,7 +23,10 @@ RUN CONDA_OVERRIDE_CUDA='11.7' conda create \
 
 SHELL ["conda", "run", "-n", "neuro", "--no-capture-output", "/bin/bash", "-c"]
 
-RUN git clone https://github.com/Kepler-Br/omega-momiji-neural-networks-services.git /content
+RUN git clone https://github.com/Kepler-Br/omega-momiji-neural-networks-services.git /content && \
+    cd /content && \
+    git checkout 4867a7cf && \
+    rm -rf .git
 
 WORKDIR /content/text-generator/src
 
