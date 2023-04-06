@@ -8,27 +8,18 @@ externalDocs:
   description: Find out more about Swagger
   url: http://swagger.io
 servers:
-  - url: https://localhost:8087
+  - url: http://localhost:8090
 tags:
   - name: Generation
     description: Everything about receiving a message
 paths:
-  /history-prompts/{promptId}:
-    put:
+  /history-prompts:
+    post:
       tags:
         - Generation
       summary: Generate with message history
       description: Generate text with some message history
       operationId: historyInputGeneration
-      parameters:
-        - name: promptId
-          in: path
-          description: Prompt id. Used for task scheduling.
-          required: true
-          schema:
-            type: string
-            format: uuid
-            example: 470cbbaf-3211-4f8e-8f5f-69c2c07856e8
       requestBody:
         description: Request content
         content:
@@ -36,29 +27,24 @@ paths:
             schema:
               $ref: '#/components/schemas/HistoryGenerationRequest'
       responses:
-        '200':
-          description: Successful operation
+        '202':
+          description: Accepted
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HistoryGenerationResponse'
+                $ref: '#/components/schemas/HistoryGenerationAcceptedResponse'
         '400':
           description: Client did wrong
-        '202':
-          description: Task was accepted for work
-        '425':
-          description: A task is still in work. Ask later
         '500':
           description: Server did wrong. You're on your own now
-  /raw-prompts/{promptId}:
-    put:
+  /history-prompts/{task_id}:
+    get:
       tags:
         - Generation
-      summary: Generate with raw input
-      description: Generate text using raw input without preprocessing
-      operationId: rawInputGeneration
+      summary: Retrieve generation by task_id
+      operationId: historyRetrieveGeneration
       parameters:
-        - name: promptId
+        - name: task_id
           in: path
           description: Prompt id. Used for task scheduling.
           required: true
@@ -66,28 +52,20 @@ paths:
             type: string
             format: uuid
             example: 470cbbaf-3211-4f8e-8f5f-69c2c07856e8
-      requestBody:
-        description: Request content
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RawGenerationRequest'
-        required: true
+        - name: Run-Async
+          in: header
+          description: If true, then endpoint must return HTTP 200 with status NOT_READY in body if task is not ready
+          required: false
+          schema:
+            type: boolean
+            example: false
       responses:
         '200':
-          description: Successful operation
+          description: Successful generation
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RawGenerationResponse'
-        '400':
-          description: Client did wrong
-        '202':
-          description: Task was accepted for work
-        '425':
-          description: A task is still in work. Ask later
-        '500':
-          description: Server did wrong. You're on your own now
+                $ref: '#/components/schemas/HistoryGenerationResponse'
 
 components:
   schemas:
@@ -100,6 +78,17 @@ components:
         - IMAGE
         - STICKER
         - TEXT
+    ResponseStatus:
+      type: string
+      example: OK
+      description: Message type
+      enum:
+        - OK
+        - NOT_READY
+        - BAD_REQUEST
+        - INTERNAL_SERVER_ERROR
+        - TOO_MANY_REQUESTS
+        - NOT_FOUND
     Message:
       type: object
       required:
@@ -130,17 +119,9 @@ components:
           type: string
           description: Emoji associated with message. Should be used for STICKER type
           example: 🤔
-    HistoryGenerationRequest:
+    GenerationParams:
       type: object
-      required:
-        - message_type
       properties:
-        prompt:
-          type: string
-          description: A prompt that should be passed to neural network
-          example: According to all known laws of aviation, there is no way a bee should be able to fly. Its wings are too small to get its fat little body off the ground. The bee, of course, flies anyway because bees don't care what humans think is impossible.
-        message_type:
-          $ref: '#/components/schemas/MessageType'
         temperature:
           type: number
           format: float
@@ -180,6 +161,11 @@ components:
           format: float
           description: TODO
           example: 0.95
+        no_repeat_ngram_size:
+          type: number
+          format: float
+          description: TODO
+          example: 1.0
         bad_words:
           type: array
           description: Tokens that are forbidden to be generated
@@ -188,6 +174,25 @@ components:
           example:
             - ' [STICKER]'
             - ' [VOICE]'
+    HistoryGenerationRequest:
+      type: object
+      properties:
+        generation_params:
+          $ref: '#/components/schemas/GenerationParams'
+        message_type:
+          $ref: '#/components/schemas/MessageType'
+        prompt:
+          type: string
+          description: A prompt that should be passed to neural network
+          example: According to all known laws of aviation, there is no way a bee should be able to fly. Its wings are too small to get its fat little body off the ground. The bee, of course, flies anyway because bees don't care what humans think is impossible.
+        prompt_author:
+          type: string
+          description: A prompt author. This will be used to generate new message
+          example: Maxwell
+        reply_to_message_id:
+          type: string
+          description: A message that new message should reply to
+          example: '2'
         history:
           type: array
           description: A list of messages in history
@@ -209,92 +214,50 @@ components:
               message_id: '3'
               emoji: 🤔
     HistoryGenerationResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          required:
+            - messages
+          properties:
+            messages:
+              type: array
+              description: Generated (Only new!) messages
+              items:
+                $ref: '#/components/schemas/Message'
+              example:
+                - author: Steven
+                  message_type: TEXT
+                  content: Hello world!
+                  message_id: '1'
+                - author: John
+                  message_type: VOICE
+                  content: Hello you too!
+                  message_id: '2'
+                  reply_to_message: '1'
+                - author: Stevgen
+                  message_type: STICKER
+                  content: A thinking person
+                  message_id: '3'
+                  emoji: 🤔
+    HistoryGenerationAcceptedResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          required:
+            - result
+          properties:
+            status:
+              $ref: '#/components/schemas/ResponseStatus'
+            task_id:
+              type: string
+              format: uuid
+              example: '8464e1bc-5f13-4425-9932-23205a0c37eb'
+    BaseResponse:
       type: object
-      required:
-        - result
       properties:
-        result:
-          type: array
-          description: Generated(Only new messages!) messages
-          items:
-            $ref: '#/components/schemas/Message'
-          example:
-            - author: Steven
-              message_type: TEXT
-              content: Hello world!
-              message_id: '1'
-            - author: John
-              message_type: VOICE
-              content: Hello you too!
-              message_id: '2'
-              reply_to_message: '1'
-            - author: Stevgen
-              message_type: STICKER
-              content: A thinking person
-              message_id: '3'
-              emoji: 🤔
-    RawGenerationResponse:
-      type: object
-      required:
-        - text
-      properties:
-        text:
+        status:
+          $ref: '#/components/schemas/ResponseStatus'
+        error_message:
           type: string
-          description: Generated text without prompt
-          example: Yellow, black. Yellow, black. Yellow, black. Yellow, black. Ooh, black and yellow!
-    RawGenerationRequest:
-      type: object
-      required:
-        - prompt
-      properties:
-        prompt:
-          type: string
-          description: A prompt that should be passed to neural network
-          example: According to all known laws of aviation, there is no way a bee should be able to fly. Its wings are too small to get its fat little body off the ground. The bee, of course, flies anyway because bees don't care what humans think is impossible.
-        temperature:
-          type: number
-          format: float
-          description: TODO
-          example: 0.8
-        max_new_tokens:
-          type: number
-          format: int32
-          description: Max new tokens that may be generated
-          example: 50
-        num_beams:
-          type: number
-          format: int32
-          description: TODO
-          example: 5
-        repetition_penalty:
-          type: number
-          format: float
-          description: TODO
-          example: 5.0
-        early_stopping:
-          type: boolean
-          description: Stop before max tokens reached
-          example: true
-        seed:
-          type: number
-          format: int64
-          description: Seed to generate with. Same seeds will produce same results
-          example: 1337
-        top_k:
-          type: number
-          format: int32
-          description: TODO
-          example: 50
-        top_p:
-          type: number
-          format: float
-          description: TODO
-          example: 0.95
-        bad_words:
-          type: array
-          description: Tokens that are forbidden to be generated
-          items:
-            type: string
-          example:
-            - ' [STICKER]'
-            - ' [VOICE]'
+          description: Filled if an error has occured

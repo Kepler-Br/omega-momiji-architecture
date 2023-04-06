@@ -34,6 +34,7 @@ services:
   s3:
     image: scality/s3server:latest
     ports:
-      - "4566:4566"
+      - "8000:8000"
     expose:
-      - 4566
+      - 8000
+  # Upload with us-east-1 region or it will throw an exception
