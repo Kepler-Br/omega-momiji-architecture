@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: Omega Momiji image captioning neural network backend
+  title: Omega Momiji speech recognition neural network backend
   description: |-
     TODO: fill me
   version: 1.0.0
@@ -8,41 +8,41 @@ externalDocs:
   description: Find out more about Swagger
   url: http://swagger.io
 servers:
-  - url: http://localhost:8091
+  - url: http://localhost:8092
 tags:
-  - name: Captioning
-    description: Everything about image captioning
+  - name: Recognition
+    description: Everything about speech recognition
 paths:
-  /image-captions:
+  /speech-captions:
     post:
       tags:
-        - Captioning
-      summary: Create a task for image captioning
-      description: Create a task for image captioning
-      operationId: scheduleCaptioning
+        - Recognition
+      summary: Create a task for speech recognition
+      description: Create a task for speech recognition
+      operationId: scheduleRecognition
       requestBody:
         description: Request content
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ImageCaptioningRequest'
+              $ref: '#/components/schemas/SpeechRecognitionRequest'
       responses:
         '202':
           description: Accepted
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ImageCaptioningAcceptedResponse'
+                $ref: '#/components/schemas/SpeechRecognitionAcceptedResponse'
         '400':
           description: Client did wrong
         '500':
           description: Server did wrong. You're on your own now
-  /image-captions/{task_id}:
+  /speech-captions/{task_id}:
     get:
       tags:
-        - Captioning
-      summary: Retrieve an image caption by task_id
-      operationId: captionRetrieveGeneration
+        - Recognition
+      summary: Retrieve a speech caption by task_id
+      operationId: retrieveCaption
       parameters:
         - name: task_id
           in: path
@@ -65,7 +65,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ImageCaptionResponse'
+                $ref: '#/components/schemas/SpeechCaptionResponse'
 
 components:
   schemas:
@@ -80,23 +80,23 @@ components:
         - INTERNAL_SERVER_ERROR
         - TOO_MANY_REQUESTS
         - NOT_FOUND
-    ImageCaptioningRequest:
+    SpeechRecognitionRequest:
       type: object
       properties:
         data:
           type: string
-          description: An image encoded in base64
-          example: VGhpcyBpcyBub3QgYW4gaW1hZ2UK
-    ImageCaptionResponse:
+          description: An audio file encoded in base64
+          example: VGhpcyBpcyBub3QgYW4gYXVkaW8K
+    SpeechCaptionResponse:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
         - type: object
           properties:
             caption:
               type: string
-              description: Image caption
-              example: A soccer player kicking a soccer ball
-    ImageCaptioningAcceptedResponse:
+              description: Speech caption
+              example: The quick brown fox jumps over the lazy dog
+    SpeechRecognitionAcceptedResponse:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
         - type: object
