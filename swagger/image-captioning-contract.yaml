@@ -1,0 +1,121 @@
+openapi: 3.0.3
+info:
+  title: Omega Momiji image captioning neural network backend
+  description: |-
+    TODO: fill me
+  version: 1.0.0
+externalDocs:
+  description: Find out more about Swagger
+  url: http://swagger.io
+servers:
+  - url: http://localhost:8091
+tags:
+  - name: Captioning
+    description: Everything about image captioning
+paths:
+  /image-captions:
+    post:
+      tags:
+        - Captioning
+      summary: Create a task for image captioning
+      description: Create a task for image captioning
+      operationId: scheduleCaptioning
+      requestBody:
+        description: Request content
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImageCaptioningRequest'
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageCaptioningAcceptedResponse'
+        '400':
+          description: Client did wrong
+        '500':
+          description: Server did wrong. You're on your own now
+  /image-captions/{task_id}:
+    get:
+      tags:
+        - Captioning
+      summary: Retrieve an image caption by task_id
+      operationId: captionRetrieveGeneration
+      parameters:
+        - name: task_id
+          in: path
+          description: Task id. Used for task scheduling.
+          required: true
+          schema:
+            type: string
+            format: uuid
+            example: 470cbbaf-3211-4f8e-8f5f-69c2c07856e8
+        - name: Run-Async
+          in: header
+          description: If true, then endpoint must return HTTP 200 with status NOT_READY in body if task is not ready
+          required: false
+          schema:
+            type: boolean
+            example: false
+      responses:
+        '200':
+          description: Successful captioning
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImageCaptioningResponse'
+
+components:
+  schemas:
+    ResponseStatus:
+      type: string
+      example: OK
+      description: Message type
+      enum:
+        - OK
+        - NOT_READY
+        - BAD_REQUEST
+        - INTERNAL_SERVER_ERROR
+        - TOO_MANY_REQUESTS
+        - NOT_FOUND
+    ImageCaptioningRequest:
+      type: object
+      properties:
+        data:
+          type: string
+          description: An image encoded in base64
+          example: VGhpcyBpcyBub3QgYW4gaW1hZ2UK
+    ImageCaptioningResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            caption:
+              type: string
+              description: Image caption
+              example: A soccer player kicking a soccer ball
+    ImageCaptioningAcceptedResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          required:
+            - result
+          properties:
+            status:
+              $ref: '#/components/schemas/ResponseStatus'
+            task_id:
+              type: string
+              format: uuid
+              example: '8464e1bc-5f13-4425-9932-23205a0c37eb'
+    BaseResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: '#/components/schemas/ResponseStatus'
+        error_message:
+          type: string
+          description: Filled if an error has occured

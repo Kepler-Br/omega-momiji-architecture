@@ -54,4 +54,3 @@ services:
 #
 #      aws s3api create-bucket --bucket test-bucket-989282 --endpoint-url http://s3:9000
 #      "
-
