@@ -87,6 +87,10 @@ components:
           type: string
           description: An image encoded in base64
           example: VGhpcyBpcyBub3QgYW4gaW1hZ2UK
+        condition:
+          type: string
+          description: A prefix to add to image caption
+          example: A picture of
     ImageCaptionResponse:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
@@ -118,4 +122,4 @@ components:
           $ref: '#/components/schemas/ResponseStatus'
         error_message:
           type: string
-          description: Filled if an error has occured
+          description: Filled if an error has occurred

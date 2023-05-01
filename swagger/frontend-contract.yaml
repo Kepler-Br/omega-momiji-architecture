@@ -18,7 +18,7 @@ paths:
       tags:
         - SendMessage
       summary: Send a message
-      description: Send a message to a corresponging messenger the frontend is implemented for
+      description: Send a message to a corresponding messenger the frontend is implemented for
       operationId: sendMessage
       requestBody:
         description: Message data

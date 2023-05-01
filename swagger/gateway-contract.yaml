@@ -44,7 +44,7 @@ paths:
       tags:
         - Outbound
       summary: Send a text message
-      description: Send a text messate to a frontend. This endpoint should be used by bot logic
+      description: Send a text message to a frontend. This endpoint should be used by bot logic
       operationId: sendTextMessage
       requestBody:
         description: Message to send

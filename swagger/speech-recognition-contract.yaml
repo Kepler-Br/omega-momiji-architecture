@@ -118,4 +118,4 @@ components:
           $ref: '#/components/schemas/ResponseStatus'
         error_message:
           type: string
-          description: Filled if an error has occured
+          description: Filled if an error has occurred
