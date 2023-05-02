@@ -9,7 +9,7 @@ create table gateway.chats
     native_id  varchar(100)  not null,
     "type"     varchar(100)  not null
         constraint chk_chats_type check ("type" in ('PRIVATE', 'GROUP')),
-    created_at timestamp     not null
+    created_at timestamp null default now()
 );
 
 create unique index uix_chats_native_id_frontend on gateway.chats (native_id, frontend);

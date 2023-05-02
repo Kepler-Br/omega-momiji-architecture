@@ -4,7 +4,7 @@
 create table bot.chat_configs
 (
     id                   bigserial primary key,
-    created_at           timestamp     not null,
+    created_at           timestamp null default now(),
     frontend             varchar(100)  not null,
     chat_native_id       varchar(100)  not null,
 
