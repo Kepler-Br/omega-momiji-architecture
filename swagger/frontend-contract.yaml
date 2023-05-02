@@ -38,9 +38,80 @@ paths:
           description: Invalid ID supplied
         '500':
           description: Something bad happened on server side
+  /chats/{chat-id}/admins:
+    get:
+      tags:
+        - Chat
+      summary: Get admins of a chat
+      operationId: getAdmins
+      parameters:
+        - name: chat-id
+          in: path
+          description: Chat id.
+          required: true
+          schema:
+            type: string
+            example: 1337
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatAdminsResponse'
+        '400':
+          description: Invalid ID supplied
+        '500':
+          description: Something bad happened on server side
+  /chats/{chat-id}/actions/typing:
+    post:
+      tags:
+        - Chat
+      summary: Send typing action
+      operationId: ActionTyping
+      parameters:
+        - name: chat-id
+          in: path
+          description: Chat id.
+          required: true
+          schema:
+            type: string
+            example: 1337
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseResponse'
+        '400':
+          description: Invalid ID supplied
+        '500':
+          description: Something bad happened on server side
 
 components:
   schemas:
+    ResponseStatus:
+      type: string
+      example: OK
+      description: Message type
+      enum:
+        - OK
+        - NOT_READY
+        - BAD_REQUEST
+        - INTERNAL_SERVER_ERROR
+        - TOO_MANY_REQUESTS
+        - NOT_FOUND
+    BaseResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: '#/components/schemas/ResponseStatus'
+        error_message:
+          type: string
+          description: Filled if an error has occurred
     SendMessageRequest:
       required:
         - text
@@ -59,12 +130,26 @@ components:
           example: '12345678'
           description: A messenger native chat ID
     SendMessageResponse:
-      type: object
-      properties:
-        error_message:
-          type: string
-          example: Hello world!
-        message_id:
-          type: string
-          example: '10'
-          description: A messenger native message ID that was sent
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            error_message:
+              type: string
+              example: Hello world!
+            message_id:
+              type: string
+              example: '10'
+              description: A messenger native message ID that was sent
+    ChatAdminsResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            admin_ids:
+              type: array
+              items:
+                type: string
+              example:
+                - 12345
+                - 54321
