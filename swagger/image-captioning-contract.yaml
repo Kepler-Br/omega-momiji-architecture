@@ -82,6 +82,8 @@ components:
         - NOT_FOUND
     ImageCaptioningRequest:
       type: object
+      required:
+        - data
       properties:
         data:
           type: string
