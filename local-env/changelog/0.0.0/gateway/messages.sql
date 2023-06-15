@@ -5,8 +5,9 @@ create table gateway.messages
 (
     id                         bigserial primary key,
     "text"                     varchar null,
-    media_link                 varchar null,
-    media_type                 varchar null
+    s3bucket                   varchar(100)                         null,
+    s3key                      varchar(100)                         null,
+    media_type                 varchar(15)                          null
         constraint chk_messages_media_type check (media_type in
         ('STICKER', 'AUDIO', 'VOICE', 'PHOTO', 'VIDEO',
         'GIF', 'VIDEO_NOTE')),
@@ -21,6 +22,3 @@ create table gateway.messages
 );
 
 create unique index uix_messages_native_id_frontend on gateway.messages (native_id, frontend);
-
-comment
-on column gateway.messages.media_link is 'A link to file in S3';
