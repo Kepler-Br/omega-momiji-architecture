@@ -78,6 +78,8 @@ components:
         - IMAGE
         - STICKER
         - TEXT
+        - VIDEO
+        - AUDIO
     ResponseStatus:
       type: string
       example: OK
@@ -93,7 +95,6 @@ components:
       type: object
       required:
         - message_type
-        - content
         - author
         - message_id
       properties:
@@ -197,7 +198,7 @@ components:
           type: array
           description: A list of messages in history
           items:
-            $ref: '#/components/schemas/HistoryGenerationRequest'
+            $ref: '#/components/schemas/Message'
           example:
             - author: Steven
               message_type: TEXT
