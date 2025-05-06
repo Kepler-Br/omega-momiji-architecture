@@ -36,8 +36,16 @@ paths:
                 $ref: '#/components/schemas/SendMessageResponse'
         '400':
           description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendMessageClientErrorResponse'
         '500':
           description: Something bad happened on server side
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericServerErrorResponse'
   /chats/{chat-id}/admins:
     get:
       tags:
@@ -61,8 +69,16 @@ paths:
                 $ref: '#/components/schemas/ChatAdminsResponse'
         '400':
           description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetAdminsClientErrorResponse'
         '500':
           description: Something bad happened on server side
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericServerErrorResponse'
   /chats/{chat-id}/actions/typing:
     post:
       tags:
@@ -83,35 +99,59 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BaseResponse'
+                $ref: '#/components/schemas/ActionTypingResponse'
         '400':
           description: Invalid ID supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionTypingClientErrorResponse'
         '500':
           description: Something bad happened on server side
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericServerErrorResponse'
+  /chats/{chat-id}/actions/typing/{action-id}:
+    delete:
+      tags:
+        - Chat
+      summary: Interrupt typing action
+      operationId: ActionTypingInterrupt
+      parameters:
+        - name: chat-id
+          in: path
+          description: Chat id.
+          required: true
+          schema:
+            type: string
+            example: 1337
+        - name: action-id
+          in: path
+          description: Typing action ID
+          required: true
+          schema:
+            type: string
+            example: 4d35eebd-a2ae-43ce-b4bf-3dd5af0a3980
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          description: Invalid UUID were supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InterruptTypingClientErrorResponse'
+        '500':
+          description: Something bad happened on server side
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenericServerErrorResponse'
 
 components:
   schemas:
-    ResponseStatus:
-      type: string
-      example: OK
-      description: Message type
-      enum:
-        - OK
-        - NOT_READY
-        - BAD_REQUEST
-        - INTERNAL_SERVER_ERROR
-        - TOO_MANY_REQUESTS
-        - NOT_FOUND
-    BaseResponse:
-      type: object
-      required:
-        - status
-      properties:
-        status:
-          $ref: '#/components/schemas/ResponseStatus'
-        error_message:
-          type: string
-          description: Filled if an error has occurred
+    # region send message
     SendMessageRequest:
       required:
         - text
@@ -130,26 +170,101 @@ components:
           example: '12345678'
           description: A messenger native chat ID
     SendMessageResponse:
-      allOf:
-        - $ref: '#/components/schemas/BaseResponse'
-        - type: object
-          properties:
-            error_message:
-              type: string
-              example: Hello world!
-            message_id:
-              type: string
-              example: '10'
-              description: A messenger native message ID that was sent
+      type: object
+      properties:
+        message_id:
+          type: string
+          example: '10'
+          description: A messenger native message ID that was sent
+    SendMessageClientErrorResponse:
+      type: object
+      properties:
+        error_message:
+          type: string
+          example: 'Invalid ID was received'
+          description: A messenger native message ID that was sent
+        error_code:
+          type: string
+          example: INVALID_ID
+          description: Message type
+          enum:
+            - INVALID_ID
+            - OTHER
+    # endregion send message
+    # region actions typing
+    ActionTypingResponse:
+      type: object
+      properties:
+        action_id:
+          type: string
+          example: '4d35eebd-a2ae-43ce-b4bf-3dd5af0a3980'
+    ActionTypingClientErrorResponse:
+      type: object
+      properties:
+        error_message:
+          type: string
+          example: 'Invalid chat ID was received'
+        error_code:
+          type: string
+          example: INVALID_ID
+          description: Message type
+          enum:
+            - INVALID_CHAT_ID
+            - OTHER
+    # endregion actions typing
+    # region actions interrupt typing
+    InterruptTypingClientErrorResponse:
+      type: object
+      properties:
+        error_message:
+          type: string
+          example: 'Invalid action UUID was received'
+        error_code:
+          type: string
+          example: INVALID_ID
+          description: Message type
+          enum:
+            - INVALID_ID
+            - OTHER
+    # endregion actions interrupt typing
+    # region /chats/{chat-id}/admins
     ChatAdminsResponse:
-      allOf:
-        - $ref: '#/components/schemas/BaseResponse'
-        - type: object
-          properties:
-            admin_ids:
-              type: array
-              items:
-                type: string
-              example:
-                - 12345
-                - 54321
+      type: object
+      properties:
+        admin_ids:
+          type: array
+          items:
+            type: string
+          example:
+            - 12345
+            - 54321
+    GetAdminsClientErrorResponse:
+      type: object
+      properties:
+        error_message:
+          type: string
+          example: 'Unable to get admin list: insufficient privileges'
+        error_code:
+          type: string
+          example: INSUFFICIENT_PRIVILEGES
+          description: Message type
+          enum:
+            - INSUFFICIENT_PRIVILEGES
+            - OTHER
+    # endregion /chats/{chat-id}/admins
+    # region Other
+    GenericServerErrorResponse:
+      type: object
+      properties:
+        error_message:
+          type: string
+          example: 'Target messenger is not available for some reason'
+          description: A messenger native message ID that was sent
+        error_code:
+          type: string
+          example: NOT_AVAILABLE
+          description: Message type
+          enum:
+            - NOT_AVAILABLE
+            - OTHER
+    # endregion
