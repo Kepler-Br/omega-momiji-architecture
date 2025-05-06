@@ -12,6 +12,10 @@ servers:
 tags:
   - name: SendMessage
     description: Sending messages
+  - name: Chat
+    description: Chat actions
+  - name: InteractionActions
+    description: Interaction actions
 paths:
   /text-messages:
     post:
@@ -82,7 +86,7 @@ paths:
   /chats/{chat-id}/actions/typing:
     post:
       tags:
-        - Chat
+        - InteractionActions
       summary: Send typing action
       operationId: ActionTyping
       parameters:
@@ -115,7 +119,7 @@ paths:
   /chats/{chat-id}/actions/typing/{action-id}:
     delete:
       tags:
-        - Chat
+        - InteractionActions
       summary: Interrupt typing action
       operationId: ActionTypingInterrupt
       parameters:
