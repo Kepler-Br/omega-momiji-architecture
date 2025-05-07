@@ -17,13 +17,21 @@ tags:
   - name: InteractionActions
     description: Interaction actions
 paths:
-  /text-messages:
+  /chats/{chat-id}/text-messages:
     post:
       tags:
         - SendMessage
       summary: Send a message
       description: Send a message to a corresponding messenger the frontend is implemented for
       operationId: sendMessage
+      parameters:
+        - name: chat-id
+          in: path
+          description: Chat id.
+          required: true
+          schema:
+            type: string
+            example: 1337
       requestBody:
         description: Message data
         content:
@@ -100,10 +108,6 @@ paths:
       responses:
         '200':
           description: Successful operation
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ActionTypingResponse'
         '400':
           description: Invalid ID supplied
           content:
@@ -116,7 +120,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GenericServerErrorResponse'
-  /chats/{chat-id}/actions/typing/{action-id}:
     delete:
       tags:
         - InteractionActions
@@ -130,18 +133,11 @@ paths:
           schema:
             type: string
             example: 1337
-        - name: action-id
-          in: path
-          description: Typing action ID
-          required: true
-          schema:
-            type: string
-            example: 4d35eebd-a2ae-43ce-b4bf-3dd5af0a3980
       responses:
         '200':
           description: Successful operation
         '400':
-          description: Invalid UUID were supplied
+          description: Client error
           content:
             application/json:
               schema:
@@ -159,7 +155,6 @@ components:
     SendMessageRequest:
       required:
         - text
-        - chat_id
       type: object
       properties:
         text:
@@ -169,10 +164,6 @@ components:
           type: string
           example: '10'
           description: A messenger native message ID
-        chat_id:
-          type: string
-          example: '12345678'
-          description: A messenger native chat ID
     SendMessageResponse:
       type: object
       properties:
@@ -196,12 +187,6 @@ components:
             - OTHER
     # endregion send message
     # region actions typing
-    ActionTypingResponse:
-      type: object
-      properties:
-        action_id:
-          type: string
-          example: '4d35eebd-a2ae-43ce-b4bf-3dd5af0a3980'
     ActionTypingClientErrorResponse:
       type: object
       properties:
@@ -215,14 +200,12 @@ components:
           enum:
             - INVALID_CHAT_ID
             - OTHER
-    # endregion actions typing
-    # region actions interrupt typing
     InterruptTypingClientErrorResponse:
       type: object
       properties:
         error_message:
           type: string
-          example: 'Invalid action UUID was received'
+          example: 'Invalid chat ID was received'
         error_code:
           type: string
           example: INVALID_ID
@@ -230,7 +213,7 @@ components:
           enum:
             - INVALID_ID
             - OTHER
-    # endregion actions interrupt typing
+    # endregion actions typing
     # region /chats/{chat-id}/admins
     ChatAdminsResponse:
       type: object
