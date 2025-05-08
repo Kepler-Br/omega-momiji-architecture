@@ -10,16 +10,16 @@ externalDocs:
 servers:
   - url: http://localhost:8091
 tags:
-  - name: Inbound
+  - name: Inbox
     description: Everything about receiving a message
-  - name: Outbound
+  - name: Outbox
     description: Everything about sending messages
 paths:
   /inbox/text-messages:
     post:
       tags:
-        - Inbound
-      summary: Receive a message
+        - Inbox
+      summary: Receive a text message
       description: >-
         Receive a message from frontend.
         This endpoint should be used by frontends.
@@ -39,21 +39,13 @@ paths:
           description: Client did wrong
         '500':
           description: Server did wrong. You're on your own now
-  /outbox/text-messages/{chat-id}:
+  /outbox/text-messages:
     post:
       tags:
-        - Outbound
+        - Outbox
       summary: Send a text message
       description: Send a text message to a frontend. This endpoint should be used by bot logic
       operationId: sendTextMessage
-      parameters:
-        - name: chat-id
-          in: path
-          description: Chat id.
-          required: true
-          schema:
-            type: string
-            example: 1337
       requestBody:
         description: Message to send
         content:
@@ -74,7 +66,7 @@ paths:
   /frontends:
     get:
       tags:
-        - Outbound
+        - Frontend
       summary: Get frontend names on this gateway
       description: Get registered frontend names on this gateway. Mostly for debug purposes
       operationId: frontendNames
@@ -85,7 +77,110 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/FrontendNamesResponse'
-
+  /frontends/{frontend}/messages/{chat-id}/{message-id}:
+    get:
+      tags:
+        - Frontend
+      summary: Get single message
+      description: Get single message from frontend
+      operationId: getSingleMessage
+      parameters:
+        - name: frontend
+          in: path
+          description: Frontend name
+          required: true
+          schema:
+            type: string
+            example: telegram
+        - name: chat-id
+          in: path
+          description: Chat ID from frontend
+          required: true
+          schema:
+            type: string
+            example: '1337'
+        - name: message-id
+          in: path
+          description: Message ID from chat and frontend
+          required: true
+          schema:
+            type: string
+            example: '1337'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Message not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error_message:
+                    type: string
+                    example: 'Target messenger is not available for some reason'
+                    description: A messenger native message ID that was sent
+                  error_code:
+                    type: string
+                    example: FRONTEND_NOT_FOUND
+                    description: Message type
+                    enum:
+                      - FRONTEND_NOT_FOUND
+                      - CHAT_NOT_FOUND
+                      - MESSAGE_NOT_FOUND
+        '500':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+  /frontends/{frontend}/messages/{chat-id}:
+    get:
+      tags:
+        - Frontend
+      summary: Get pageable messages
+      description: Get pageable messages from frontend
+      operationId: getMessagePage
+      parameters:
+        - name: frontend
+          in: path
+          description: Frontend name
+          required: true
+          schema:
+            type: string
+            example: telegram
+        - name: chat-id
+          in: path
+          description: Chat ID from frontend
+          required: true
+          schema:
+            type: string
+            example: '1337'
+        - name: page
+          in: query
+          description: Page number
+          required: true
+          schema:
+            type: integer
+            example: 1
+        - name: number
+          in: query
+          description: Page number
+          required: true
+          schema:
+            type: integer
+            example: 0
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
 components:
   schemas:
     # region /inbox/text-messages
@@ -199,19 +294,19 @@ components:
           type: string
           description: Native message ID
           example: '10'
-    ActionInfo:
+    # region Other
+    GenericServerErrorResponse:
       type: object
-      required:
-        - action_type
-        - related_user
       properties:
-        action_type:
+        error_message:
           type: string
-          example: NEW_MEMBER
-          description: Action type. NEW_MEMBER - new member; MEMBER_LEFT - member left; OTHER - actions that is in no interest for gateway
+          example: 'Target messenger is not available for some reason'
+          description: A messenger native message ID that was sent
+        error_code:
+          type: string
+          example: NOT_AVAILABLE
+          description: Message type
           enum:
-            - NEW_MEMBER
-            - MEMBER_LEFT
+            - NOT_AVAILABLE
             - OTHER
-        related_user:
-          $ref: '#/components/schemas/Author'
+    # endregion
