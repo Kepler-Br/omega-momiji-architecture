@@ -15,8 +15,8 @@ tags:
   - name: Outbound
     description: Everything about sending messages
 paths:
-  /inbound/messages:
-    put:
+  /inbox/text-messages:
+    post:
       tags:
         - Inbound
       summary: Receive a message
@@ -39,13 +39,21 @@ paths:
           description: Client did wrong
         '500':
           description: Server did wrong. You're on your own now
-  /outbound/text-messages:
+  /outbox/text-messages/{chat-id}:
     post:
       tags:
         - Outbound
       summary: Send a text message
       description: Send a text message to a frontend. This endpoint should be used by bot logic
       operationId: sendTextMessage
+      parameters:
+        - name: chat-id
+          in: path
+          description: Chat id.
+          required: true
+          schema:
+            type: string
+            example: 1337
       requestBody:
         description: Message to send
         content:
@@ -63,7 +71,7 @@ paths:
           description: Client did wrong
         '500':
           description: Server did wrong. You're on your own now
-  /outbound/frontends:
+  /frontends:
     get:
       tags:
         - Outbound
@@ -80,6 +88,70 @@ paths:
 
 components:
   schemas:
+    # region /inbox/text-messages
+    InboundMessagesRequest:
+      type: object
+      required:
+        - id
+        - author
+        - chat
+        - frontend
+        - type
+      properties:
+        author:
+          $ref: '#/components/schemas/Author'
+        chat:
+          $ref: '#/components/schemas/Chat'
+        frontend:
+          type: string
+          description: Frontend name. Frontend should write here its name
+          example: telegram
+        text:
+          type: string
+          description: Message text
+          example: Hello world!
+    Author:
+      type: object
+      required:
+        - id
+        - username
+        - fullname
+      properties:
+        id:
+          type: string
+          example: '123'
+          description: Native user ID
+        username:
+          type: string
+          example: Simpleton
+          description: Username
+        fullname:
+          type: string
+          example: Fullname
+          description: User\'s fullname that consists of firstname and lastname
+    Chat:
+      type: object
+      required:
+        - id
+        - title
+        - type
+      properties:
+        id:
+          type: string
+          description: Frontend native chat ID
+          example: '12356'
+        title:
+          type: string
+          description: Chat title
+          example: Omega Momiji Dev Chat
+        type:
+          type: string
+          description: Chat type
+          example: GROUP
+          enum:
+            - GROUP
+            - PRIVATE
+    # endregion /inbox/text-messages
     FrontendNamesResponse:
       type: object
       required:
@@ -127,80 +199,6 @@ components:
           type: string
           description: Native message ID
           example: '10'
-    InboundMessagesRequest:
-      type: object
-      required:
-        - id
-        - author
-        - chat
-        - frontend
-        - type
-      properties:
-        id:
-          type: string
-          description: A native message ID
-          example: '10'
-        author:
-          $ref: '#/components/schemas/Author'
-        chat:
-          $ref: '#/components/schemas/Chat'
-        frontend:
-          type: string
-          description: Frontend name. Frontend should write here its name
-          example: telegram
-        text:
-          type: string
-          description: Message text
-          example: Hello world!
-        type:
-          type: string
-          example: MESSAGE
-          enum:
-            - MESSAGE
-            - ACTION
-        action_info:
-          $ref: '#/components/schemas/ActionInfo'
-    Author:
-      type: object
-      required:
-        - id
-        - username
-        - fullname
-      properties:
-        id:
-          type: string
-          example: '123'
-          description: Native user ID
-        username:
-          type: string
-          example: Simpleton
-          description: Username
-        fullname:
-          type: string
-          example: Fullname
-          description: User\'s fullname that consists of firstname and lastname
-    Chat:
-      type: object
-      required:
-        - id
-        - title
-        - type
-      properties:
-        id:
-          type: string
-          description: Frontend native chat ID
-          example: '12356'
-        title:
-          type: string
-          description: Chat title
-          example: Omega Momiji Dev Chat
-        type:
-          type: string
-          description: Chat type
-          example: GROUP
-          enum:
-            - GROUP
-            - PRIVATE
     ActionInfo:
       type: object
       required:
