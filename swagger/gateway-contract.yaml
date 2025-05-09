@@ -4,9 +4,6 @@ info:
   description: |-
     A gateway that connects backend logic with various frontends.
   version: 1.0.0
-externalDocs:
-  description: Find out more about Swagger
-  url: http://swagger.io
 servers:
   - url: http://localhost:8091
 tags:
@@ -30,7 +27,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/InboundMessagesRequest'
+              $ref: '#/components/schemas/InboxMessagesRequest'
         required: true
       responses:
         '200':
@@ -112,7 +109,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: '#/components/schemas/Message'
         '404':
           description: Message not found
           content:
@@ -138,6 +135,17 @@ paths:
             application/json:
               schema:
                 type: object
+                properties:
+                  error_message:
+                    type: string
+                    example: 'Target messenger is not available for some reason'
+                    description: A messenger native message ID that was sent
+                  error_code:
+                    type: string
+                    example: OTHER
+                    description: Message type
+                    enum:
+                      - OTHER
   /frontends/{frontend}/messages/{chat-id}:
     get:
       tags:
@@ -181,10 +189,104 @@ paths:
             application/json:
               schema:
                 type: object
+  /frontends/{frontend}/chats/{chat-id}:
+    get:
+      tags:
+        - Frontend
+      summary: Get pageable messages
+      description: Get pageable messages from frontend
+      operationId: getChat
+      parameters:
+        - name: frontend
+          in: path
+          description: Frontend name
+          required: true
+          schema:
+            type: string
+            example: telegram
+        - name: chat-id
+          in: path
+          description: Frontend name
+          required: true
+          schema:
+            type: string
+            example: '1337'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '404':
+          description: Frontend not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error_message:
+                    type: string
+                    example: 'Target messenger is not available for some reason'
+                    description: A messenger native message ID that was sent
+                  error_code:
+                    type: string
+                    example: FRONTEND_NOT_FOUND
+                    description: Message type
+                    enum:
+                      - FRONTEND_NOT_FOUND
+                      - CHAT_NOT_FOUND
+  /frontends/{frontend}/users/{user-id}:
+    get:
+      tags:
+        - Frontend
+      summary: Get pageable messages
+      description: Get pageable messages from frontend
+      operationId: getUser
+      parameters:
+        - name: frontend
+          in: path
+          description: Frontend name
+          required: true
+          schema:
+            type: string
+            example: telegram
+        - name: user-id
+          in: path
+          description: Frontend name
+          required: true
+          schema:
+            type: string
+            example: '1337'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: Frontend not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error_message:
+                    type: string
+                    example: 'Target messenger is not available for some reason'
+                    description: A messenger native message ID that was sent
+                  error_code:
+                    type: string
+                    example: FRONTEND_NOT_FOUND
+                    description: Message type
+                    enum:
+                      - FRONTEND_NOT_FOUND
+                      - USER_NOT_FOUND
 components:
   schemas:
     # region /inbox/text-messages
-    InboundMessagesRequest:
+    InboxMessagesRequest:
       type: object
       required:
         - id
@@ -193,10 +295,12 @@ components:
         - frontend
         - type
       properties:
-        author:
-          $ref: '#/components/schemas/Author'
+        from_user:
+          $ref: '#/components/schemas/InboxUser'
         chat:
-          $ref: '#/components/schemas/Chat'
+          $ref: '#/components/schemas/InboxChat'
+        forward_from:
+          $ref: '#/components/schemas/InboxUser'
         frontend:
           type: string
           description: Frontend name. Frontend should write here its name
@@ -205,47 +309,54 @@ components:
           type: string
           description: Message text
           example: Hello world!
-    Author:
+        reply_to_message_id:
+          type: integer
+          example: 1337
+    InboxUser:
       type: object
-      required:
-        - id
-        - username
-        - fullname
       properties:
         id:
           type: string
-          example: '123'
-          description: Native user ID
+          example: '1337'
+        first_name:
+          type: string
+          example: 'Firstname'
+        last_name:
+          type: string
+          example: 'Lastname'
         username:
           type: string
-          example: Simpleton
-          description: Username
-        fullname:
-          type: string
-          example: Fullname
-          description: User\'s fullname that consists of firstname and lastname
-    Chat:
+          example: 'username'
+        is_bot:
+          type: boolean
+          example: true
+    InboxChat:
       type: object
-      required:
-        - id
-        - title
-        - type
       properties:
         id:
           type: string
-          description: Frontend native chat ID
-          example: '12356'
+          example: '1337'
         title:
           type: string
-          description: Chat title
-          example: Omega Momiji Dev Chat
+          example: 'Chat title'
         type:
           type: string
-          description: Chat type
-          example: GROUP
+          example: PRIVATE
           enum:
-            - GROUP
             - PRIVATE
+            - BOT
+            - GROUP
+            - SUPERGROUP
+            - CHANNEL
+        first_name:
+          type: string
+          example: 'Firstname'
+        last_name:
+          type: string
+          example: 'Lastname'
+        username:
+          type: string
+          example: 'username'
     # endregion /inbox/text-messages
     FrontendNamesResponse:
       type: object
@@ -295,18 +406,76 @@ components:
           description: Native message ID
           example: '10'
     # region Other
-    GenericServerErrorResponse:
+    Message:
       type: object
       properties:
-        error_message:
+        id:
+          type: integer
+          example: 1337
+        native_id:
           type: string
-          example: 'Target messenger is not available for some reason'
-          description: A messenger native message ID that was sent
-        error_code:
+          example: '1337'
+        from_user:
+          $ref: '#/components/schemas/User'
+        chat:
+          $ref: '#/components/schemas/Chat'
+        forward_from:
+          $ref: '#/components/schemas/User'
+        reply_to_message_id:
+          type: integer
+          example: 1337
+        text:
           type: string
-          example: NOT_AVAILABLE
-          description: Message type
+          example: Message string
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1337
+        native_id:
+          type: string
+          example: '1337'
+        first_name:
+          type: string
+          example: 'Firstname'
+        last_name:
+          type: string
+          example: 'Lastname'
+        username:
+          type: string
+          example: 'username'
+        is_bot:
+          type: boolean
+          example: true
+    Chat:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1337
+        native_id:
+          type: string
+          example: '1337'
+        title:
+          type: string
+          example: 'Chat title'
+        type:
+          type: string
+          example: PRIVATE
           enum:
-            - NOT_AVAILABLE
-            - OTHER
+            - PRIVATE
+            - BOT
+            - GROUP
+            - SUPERGROUP
+            - CHANNEL
+        first_name:
+          type: string
+          example: 'Firstname'
+        last_name:
+          type: string
+          example: 'Lastname'
+        username:
+          type: string
+          example: 'username'
     # endregion
