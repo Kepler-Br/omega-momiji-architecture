@@ -3,38 +3,24 @@ name: omeag-momiji
 
 services:
   postgres:
-    build:
-      context: ./postgres-db
+    image: postgres:15
     ports:
-      - "5429:5432"
-    expose:
-      - 5432
+      - "5432:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./postgres/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  liquibase:
-    image: liquibase/liquibase:4.19
-    volumes:
-      - "./changelog:/liquibase/changelog"
-    command: >
-      --url="jdbc:postgresql://postgres:5432/omega"
-      --changeLogFile=/changelog/changelog-master.yaml
-      --username=nonroot
-      --password=nonroot
-      update
-    depends_on:
-      postgres:
-        condition: service_healthy
+      start_period: 15s
+      interval: 10s
+      timeout: 3s
+      retries: 12
 
   # Upload with us-east-1 region or it will throw an exception
   s3:
-    image: hub.docker.dw/bitnami/minio:latest
+    image: hub.docker.dw/bitnami/minio:2025.4.22
     ports:
       - "8000:9000"
       - "8001:9001"
@@ -46,47 +32,62 @@ services:
       - MINIO_DEFAULT_BUCKETS=audio,video,image
 
   zookeeper:
-    image: hub.docker.dw/confluentinc/cp-zookeeper
+    image: hub.docker.dw/confluentinc/cp-zookeeper:7.9.1
     ports:
       - "22181:2181"
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+      KAFKA_OPTS: -Dzookeeper.4lw.commands.whitelist=ruok
+    healthcheck:
+      test: [ "CMD-SHELL", 'echo "ruok" | nc -w 2 localhost 2181 | grep imok' ]
+      start_period: 15s
+      interval: 10s
+      timeout: 3s
+      retries: 12
 
-  # TODO: hardcode versions
   kafka:
-    image: hub.docker.dw/confluentinc/cp-kafka
+    image: hub.docker.dw/confluentinc/cp-kafka:7.9.1
     ports:
       - "9092:9092"
       - "19092:19092"
       - "29092:29092"
     depends_on:
-      - zookeeper
+      zookeeper:
+        condition: service_healthy
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:19092,EXTERNAL://${DOCKER_HOST_IP:-127.0.0.1}:9092,DOCKER://kafka:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,DOCKER:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
-      KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
+      KAFKA_LISTENERS: PLAINTEXT://:9092,PLAINTEXT_INTERNAL://:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:19092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+#      KAFKA_OPTS: -Dzookeeper.4lw.commands.whitelist=ruok
+    healthcheck:
+      test: [ "CMD-SHELL", 'kafka-broker-api-versions --bootstrap-server kafka:19092' ]
+      start_period: 15s
+      interval: 10s
+      timeout: 3s
+      retries: 20
 
   kafka-init:
-    image: hub.docker.dw/confluentinc/cp-kafka
+    image: hub.docker.dw/confluentinc/cp-kafka:7.9.1
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     entrypoint: ['/bin/sh', '-c']
     command: |
       "
       # Blocks until kafka is reachable
-      kafka-topics --bootstrap-server kafka:29092 --list
+      kafka-topics --bootstrap-server kafka:19092 --list
       
       declare -a pids=()
       
       create_topic() {
-        kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic $$1 --replication-factor 1 --partitions 3 &
+        kafka-topics --bootstrap-server kafka:19092 --create --if-not-exists --topic $$1 --replication-factor 1 --partitions 3 &
         pids+=($$!)
       }
       
@@ -102,7 +103,10 @@ services:
       "
 
   kafka-ui:
-    image: hub.docker.dw/tchiotludo/akhq
+    image: hub.docker.dw/tchiotludo/akhq:0.25.1
+    depends_on:
+      kafka:
+        condition: service_healthy
     ports:
       - "8100:8080"
     environment:
@@ -111,19 +115,4 @@ services:
           connections:
             docker-kafka-server:
               properties:
-                bootstrap.servers: "kafka:29092"
-
-#      KAFKA_JMX_PORT: 9999
-#      KAFKA_JMX_HOSTNAME: ${DOCKER_HOST_IP:-127.0.0.1}
-#      KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
-#      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
-#  aws-cli:
-#    image: amazon/aws-cli:latest
-#    command: |
-#      "
-#      aws configure set aws_access_key_id accessKey1
-#      aws configure set aws_secret_access_key verySecretKey1
-#      aws configure set default.region us-east-1
-#
-#      aws s3api create-bucket --bucket test-bucket-989282 --endpoint-url http://s3:9000
-#      "
+                bootstrap.servers: "kafka:19092"
