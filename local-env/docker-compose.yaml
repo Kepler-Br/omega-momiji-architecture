@@ -97,7 +97,8 @@ services:
         done
       }
       
-      create_topic TEST
+      create_topic frontends.messages.v1
+      create_topic captioning_neural_networks.captions.v1
       
       wait_for_topics 1
       "
