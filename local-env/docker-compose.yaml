@@ -1,5 +1,4 @@
-version: '3.9'
-name: omeag-momiji
+name: omega-momiji
 
 services:
   postgres:
@@ -19,7 +18,7 @@ services:
       retries: 12
 
   # Upload with us-east-1 region or it will throw an exception
-  s3:
+  minio:
     image: hub.docker.dw/bitnami/minio:2025.4.22
     ports:
       - "8000:9000"
@@ -29,7 +28,7 @@ services:
     environment:
       - MINIO_ROOT_USER=accessKey1
       - MINIO_ROOT_PASSWORD=verySecretKey1
-      - MINIO_DEFAULT_BUCKETS=audio,video,image
+      - MINIO_DEFAULT_BUCKETS=sticker,audio,voice,photo,video,animation,video-note
 
   zookeeper:
     image: hub.docker.dw/confluentinc/cp-zookeeper:7.9.1
@@ -83,22 +82,29 @@ services:
       "
       # Blocks until kafka is reachable
       kafka-topics --bootstrap-server kafka:19092 --list
-      
+
       declare -a pids=()
-      
+
       create_topic() {
         kafka-topics --bootstrap-server kafka:19092 --create --if-not-exists --topic $$1 --replication-factor 1 --partitions 3 &
         pids+=($$!)
       }
-      
+
       wait_for_topics() {
         for pid in $${pids[*]}; do
           wait $$pid
         done
       }
-      
+
       create_topic frontends.messages.v1
-      create_topic captioning_neural_networks.captions.v1
+      create_topic frontends.messages.v1.robot.dlq
+
+      create_topic frontends.reactions.v1
+
+      create_topic neural_networks.captions.v1
+
+      create_topic neural_networks.text_generations.v1
+      create_topic neural_networks.text_generations.v1.robot.dlq
       
       wait_for_topics 1
       "
