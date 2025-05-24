@@ -2,7 +2,7 @@ name: omega-momiji
 
 services:
   postgres:
-    image: postgres:15
+    image: hub.docker.dw/postgres:15
     ports:
       - "5432:5432"
     environment:
