@@ -8,7 +8,7 @@ externalDocs:
   description: Find out more about Swagger
   url: https://swagger.io
 servers:
-  - url: http://localhost:8088
+  - url: http://localhost:8080
 tags:
   - name: SendMessage
     description: Sending messages
@@ -17,7 +17,7 @@ tags:
   - name: InteractionActions
     description: Interaction actions
 paths:
-  /chats/{chat-id}/text-messages:
+  /chats/{chat_id}/text-messages:
     post:
       tags:
         - SendMessage
@@ -25,7 +25,7 @@ paths:
       description: Send a message to a corresponding messenger the frontend is implemented for
       operationId: sendMessage
       parameters:
-        - name: chat-id
+        - name: chat_id
           in: path
           description: Chat id.
           required: true
@@ -58,14 +58,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GenericServerErrorResponse'
-  /chats/{chat-id}/admins:
+  /chats/{chat_id}/admins:
     get:
       tags:
         - Chat
       summary: Get admins of a chat
       operationId: getAdmins
       parameters:
-        - name: chat-id
+        - name: chat_id
           in: path
           description: Chat id.
           required: true
@@ -91,14 +91,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GenericServerErrorResponse'
-  /chats/{chat-id}/actions/typing:
+  /chats/{chat_id}/actions/typing:
     post:
       tags:
         - InteractionActions
       summary: Send typing action
       operationId: ActionTyping
       parameters:
-        - name: chat-id
+        - name: chat_id
           in: path
           description: Chat id.
           required: true
@@ -126,7 +126,7 @@ paths:
       summary: Interrupt typing action
       operationId: ActionTypingInterrupt
       parameters:
-        - name: chat-id
+        - name: chat_id
           in: path
           description: Chat id.
           required: true

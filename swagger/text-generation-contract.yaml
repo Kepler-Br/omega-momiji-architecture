@@ -96,31 +96,34 @@ components:
     # endregion
     # region /v1/chat/completions
     ChatGenerationRequest:
-      type: array
-      items:
-        type: object
-        required:
-          - id
-        properties:
-          id:
-            type: string
-            description: Message ID
-            example: 1
-          text:
-            type: string
-            description: Message text
-            example: Hello world!
-          media_type:
-            type: string
-            description: Media type
-            example: IMAGE
-            enum:
-              - PHOTO
-              - VOICE
-          media_caption:
-            type: string
-            description: Media caption
-            example: A photo containing an apple
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+            properties:
+              id:
+                type: string
+                description: Message ID
+                example: 1
+              text:
+                type: string
+                description: Message text
+                example: Hello world!
+              media_type:
+                type: string
+                description: Media type
+                example: IMAGE
+                enum:
+                  - PHOTO
+                  - VOICE
+              media_caption:
+                type: string
+                description: Media caption
+                example: A photo containing an apple
     ChatGenerationResponse:
       type: object
       required:
