@@ -103,8 +103,8 @@ services:
 
       create_topic neural_networks.captions.v1
 
+      create_topic neural_networks.text_generation_requests.v1
       create_topic neural_networks.text_generations.v1
-      create_topic neural_networks.text_generations.v1.robot.dlq
       
       wait_for_topics 1
       "
